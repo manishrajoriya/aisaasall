@@ -37,7 +37,7 @@ console.log(" ====", messages);
          
          let data = "";
         for await (const chunk of stream) {
-           data += process.stdout.write(chunk.choices[0]?.delta?.content || "");
+           data += process.stdout.write(chunk.choices[0]?.delta.content || "");
             }
             console.log("data = ", data);
         return new NextResponse(data, { status: 200 });

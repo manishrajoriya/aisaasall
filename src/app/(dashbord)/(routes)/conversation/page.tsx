@@ -1,116 +1,100 @@
 "use client"
 import Heading from '@/components/Heading'
-import { MessageSquare } from 'lucide-react'
+import { LoaderCircleIcon, MessageSquare } from 'lucide-react'
 import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import * as z from 'zod'
-import { formSchema } from './constants'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Form, FormControl, FormField, FormItem } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import axios from 'axios';
-import { useRouter } from 'next/navigation'
-import {toast, Toaster} from 'react-hot-toast'
+import {toast, Toaster} from "react-hot-toast"
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 
+function Chat() {
+    const [messages, setMessages] = useState<Record<string, string | number>>({})
+    const [input, setInput] = useState('')
+    const [loading, setLoading] = useState(false)
+    const router = useRouter()
 
-function Conversation() {
-    const router = useRouter();
-    const [messages, setMessages] = useState([ { role: "system", content: "You are a helpful assistant." }])
+    const onSubmit = async(e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        try {
+            setLoading(true)
 
-
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            prompt: ''
-        }
-    })
-
-    const isLoading = form.formState.isSubmitting;
-
-    const onSubmit = async (values: z.infer<typeof formSchema>) => {
-       try {
-        const userMessage = {
-            role: 'user',
-            content: values.prompt
+            const response =await axios.post('/api/chat', {
+                messages: input
+            })
+            console.log("response = ", response.data);
+            setMessages(response.data)
             
+            
+            setLoading(false)
+            toast.success("Message sent successfully")
+        } catch (error) {
+            
+            console.log(error);
+            toast.error("Something went wrong")
+        }finally{
+            router.refresh()
+            setInput('')
+            setLoading(false)
         }
-        const newMessages = [...messages, userMessage]
 
-        const response = await axios.post('/api/conversation', {
-            messages: newMessages
-        })
-        console.log("response = ", response);
-        console.log(userMessage);
-        
-        setMessages((prev) => [...prev, userMessage, response.data])
-        form.reset();
-       } catch (error: any) {
-        //todo open pro model
-        console.log("message",error);
-        toast.error("Something went wrong")
-        
-       }finally{
-        router.refresh()
-       }
     }
   return (
-    <div>
+    <div className='px-4 lg:px-8'>
         <Heading
-           title='Conversation'
-           description='Our most advanced conversation'
-           icon={MessageSquare}
-           iconColor='text-violet-500'
-           bgColor='bg-violet-500/10'
-        />
-        <div className='px-4 lg:px-8'>
-            <div>
-                <Form {...form}>
-                    <form 
-                       onSubmit={form.handleSubmit(onSubmit)} 
-                       className='rounded-lg border w-full p-4 px-3 md:px-6 focus-within:shadow-sm grid grid-cols-12 gap-2'
-                       >
-                        <FormField
-                        name='prompt'
-                        render={({field}) => (
-                            <FormItem
-                              className='col-span-12 lg:col-span-10'
-                            >
-                              <FormControl className=' m-0 p-0'>
-                                <Input
-                                  disabled={isLoading}
-                                  placeholder='How do i claculate the radious of circle'
-                                  {...field}
-                                  className=' border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent'
-                                />
-                              </FormControl>
-                            </FormItem>
-                        )}
-                        />
-                        <Button
-                          disabled={isLoading}
-                        className=' col-span-12 lg:col-span-2 w-full'>
-                            Genrate
-                        </Button>
-                    </form>
-                </Form>
-            </div>
-            <div className=' space-y-4 mt-4'>
-               <div className=' flex flex-col-reverse gap-y-4'>
-                 {
-                  messages.map((message) => (
-                    <div key={message.content}>
-                      {message.content}
+            title='Conversation'
+            description='Our most advanced conversation'
+            icon={MessageSquare}
+            iconColor='text-violet-500'
+            bgColor='bg-violet-500/10'
+         />
+         <div className=''>
+            <form
+              className=''
+              onSubmit={onSubmit}
+            >
+                <Input
+                    title='enter prompt'
+                    placeholder='Type your message'
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    disabled={loading}
+                    className=' border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent'
+                />
+                <Button
+                className='col-span-12 lg:col-span-2 w-full'
+                 type='submit'
+                 disabled={loading}
+                >
+                    {loading ? 'Generating' : 'Generate'}
+                </Button>
+            </form>
+         </div>
+         <div>
+            {
+                loading && <LoaderCircleIcon/> 
+            }
+         </div>
+         <div className=' space-y-4 mt-4'>
+              {Object.keys(messages).length > 0 ? (
+                    <div className='flex flex-col-reverse gap-y-4'>
+                        
+                        <ul>
+                            {Object.entries(messages).map(([key, value]) => (
+                                <li key={key}>
+                                     {String(value)}
+                                </li>
+                            ))}
+                        </ul>
                     </div>
-                  ))
-                 }
-               </div>
-            </div>
-        </div>
-        <Toaster/>
+                ) : (
+                    <p>No messages</p>
+                )}
+         </div>
+         <Toaster/>
     </div>
   )
 }
 
-export default Conversation
+export default Chat
