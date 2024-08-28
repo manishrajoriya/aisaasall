@@ -1,9 +1,13 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-// import GoogleGenerativeAI from "@google/generative-ai"
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+import Replicate from "replicate";
+
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN,
+});
+
 
 export async function POST(req: Request) {
     try {
@@ -20,17 +24,21 @@ export async function POST(req: Request) {
         }
         
     
-        
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
-        const result = await model.generateContent(messages)
-        const response = await result.response;
-        const text = response.text();
-        
+        const input = {
+                prompt: messages,
+                num_outputs: 1,
+                aspect_ratio: "1:1",
+                output_format: "webp",
+                output_quality: 80
+        };
+       const output = await replicate.run("black-forest-labs/flux-schnell", { input });
+
+console.log(output);
         
         // console.log("result", result);
         // console.log("text", text);
         
-        return NextResponse.json({data: text})
+        return NextResponse.json({data: output})
     } catch (error) {
         console.log(error);
         return new NextResponse("Internal Error", { status: 500 });

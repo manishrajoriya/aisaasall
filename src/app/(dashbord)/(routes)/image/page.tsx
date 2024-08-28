@@ -1,16 +1,18 @@
 "use client"
 import Heading from '@/components/Heading'
-import { LoaderCircleIcon, MessageSquare } from 'lucide-react'
+import { ImageIcon, LoaderCircleIcon, MessageSquare } from 'lucide-react'
 import React, { useState } from 'react'
 import axios from 'axios';
 import {toast, Toaster} from "react-hot-toast"
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { string } from 'zod';
+import Image from 'next/image';
 
 
 function Chat() {
-    const [messages, setMessages] = useState<Record<string, string | number>>({})
+    const [image, setImage] = useState<Record<string, string | number>>({})
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
     const router = useRouter()
@@ -21,11 +23,11 @@ function Chat() {
         try {
             setLoading(true)
 
-            const response =await axios.post('/api/chat', {
+            const response =await axios.post('/api/image', {
                 messages: input
             })
-            // console.log("response = ", response.data);
-            setMessages(response.data)
+            console.log("response = ", response);
+            setImage(response.data)
             
             setQuestion(input)
             setLoading(false)
@@ -44,9 +46,9 @@ function Chat() {
   return (
     <div className='px-4 lg:px-8'>
         <Heading
-            title='Conversation'
-            description='Our most advanced conversation'
-            icon={MessageSquare}
+            title='Image Genrate'
+            description='Generate image from text'
+            icon={ImageIcon}
             iconColor='text-violet-500'
             bgColor='bg-violet-500/10'
          />
@@ -56,8 +58,8 @@ function Chat() {
               onSubmit={onSubmit}
             >
                 <Input
-                    title='enter prompt'
-                    placeholder='Type your message'
+                    title='enter prompt '
+                    placeholder='Enter text to genrate image'
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     disabled={loading}
@@ -68,7 +70,7 @@ function Chat() {
                  type='submit'
                  disabled={loading}
                 >
-                    {loading ? 'Generating...' : 'Generate'}
+                    {loading ? 'Generating' : 'Generate'}
                 </Button>
             </form>
          </div>
@@ -78,13 +80,13 @@ function Chat() {
             }
          </div>
          <div className=' space-y-4 mt-4'>
-              {Object.keys(messages).length > 0 ? (
+              {Object.keys(image).length > 0 ? (
                     <div className='flex flex-col-reverse gap-y-4'>
                         
                         <ul>
-                            {Object.entries(messages).map(([key, value]) => (
+                            {Object.entries(image).map(([key, value]) => (
                                 <li key={key}>
-                                     { <strong>{question} :</strong> }<br /> {String(value)}
+                                     <Image src={value as string} alt={key} width={200} height={200} className='rounded-lg'/> 
                                 </li>
                             ))}
                         </ul>
