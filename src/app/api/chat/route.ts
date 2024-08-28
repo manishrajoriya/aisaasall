@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { incriseApiLimit, checkApiLimit } from '@/lib/api-limit';
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 // import GoogleGenerativeAI from "@google/generative-ai"
 
@@ -19,6 +20,11 @@ export async function POST(req: Request) {
             return new NextResponse("Messages are required", { status: 400 });
         }
         
+        const freeTrail = await checkApiLimit()
+
+        if (!freeTrail) {
+            return new NextResponse("You have reached your limit", { status: 403 });
+        }
     
         
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
@@ -26,6 +32,7 @@ export async function POST(req: Request) {
         const response = await result.response;
         const text = response.text();
         
+        await incriseApiLimit()
         
         // console.log("result", result);
         // console.log("text", text);
